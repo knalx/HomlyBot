@@ -46,4 +46,4 @@ fabric.properties
 .idea/
 HomlyBot.iml
 target/
-src/resources/
+src/main/resources/

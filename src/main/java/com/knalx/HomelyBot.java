@@ -1,14 +1,17 @@
 package com.knalx;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.api.methods.send.SendAudio;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Random;
 
 /**
@@ -16,9 +19,16 @@ import java.util.Random;
  */
 public class HomelyBot extends TelegramLongPollingBot {
 
-    private HashMap<String, String> hm;
+    private LinkedList<QuestionItem> questionItems;
+
+    Logger log = LoggerFactory.getLogger(this.getClass());
 
     ConfigReader configReader = new ConfigReader();
+
+    public HomelyBot() {
+        super();
+        questionItems = initQuestions();
+    }
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -32,7 +42,7 @@ public class HomelyBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
-        System.out.println(update);
+        log.info(update.toString());
     }
 
     private void sendCongratsSong(Update update) {
@@ -57,8 +67,8 @@ public class HomelyBot extends TelegramLongPollingBot {
 
 
     private String getAnswer(String message, Update update) {
-        init();
-        String answ = hm.get(message);
+        initQuestions();
+        String answ = "";
         if (message.equals("лап")) {
             sendCongratsSong(update);
             answ = "Умничка! Ты все угадала!";
@@ -76,7 +86,11 @@ public class HomelyBot extends TelegramLongPollingBot {
             sendCongratsSong(update);
             answ = "Оля, лучше всех!";
         }
-        if (answ == null) {
+        if (!questionItems.isEmpty() && questionItems.get(0).getQuest().equals(message)) {
+            answ = questionItems.get(0).getAnswer();
+            questionItems.remove(0);
+        }
+        if (answ.isEmpty()) {
             ArrayList<String> list = new ArrayList<>();
             list.add("Не понимаю о чем ты");
             list.add("Эээ.... что?");
@@ -95,13 +109,24 @@ public class HomelyBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        String botName = configReader.getProperty("bot.name");
+        String botName = null;
+        try {
+            botName = configReader.getProperty("bot.name");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return botName;//"HomelyBot";
     }
 
     @Override
     public String getBotToken() {
-        return configReader.getProperty("bot.token");
+        String token = null;
+        try {
+            token = configReader.getProperty("bot.token");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return token;
     }
 
     /**
@@ -121,33 +146,31 @@ public class HomelyBot extends TelegramLongPollingBot {
      **/
 
 
-    private void init() {
-        hm = new HashMap<String, String>();
-        hm.put("привет",
-                "Привет, Оля.\n" +
-                        "Я ваш домаший житель, \n" +
-                        "Загадок и тайн хранитель. \n" +
-                        "Загадку ты попробуй разгадать, \n" +
-                        "А где искать, попробую я подсказать: \n" +
-                        " Не вешай нос, и не чихай,\n" +
-                        " Мои друзья, помогут так и знай.");
-        hm.put("выдра",
-                "В меня не верила ты никогда,\n" +
-                        "Ведь новомодный я, на кухне я звезда.");
-        hm.put("silenthill",
-                "Немножка ада есть во мне,\n" +
-                        "Ищи в хранилище, на дне.");
-        hm.put("пионы",
-                "Нас всего трое, разных но похожих,\n" +
-                        "Ищи ответ в украшенном подножье");
-        hm.put("холокост",
-                "Приду на помощь я в часы душевной муки,\n" +
-                        "Да и в обычный день займу я твои руки"
-        );
-        hm.put("panicatthedisco",
-                "И за метафорой скрывается ответ,\n" +
-                        "Расстроен, счастлив, иль все бред?"
-        );
+    private LinkedList<QuestionItem> initQuestions() {
+        LinkedList<QuestionItem> questionItems = new LinkedList<>();
+
+        questionItems.add(new QuestionItem(
+                "привет",
+                "Останки его нашли в янтаре \n" +
+                        "Не так уж и холоно ему в январе"
+        ));
+        questionItems.add(new QuestionItem(
+                "пушизавр",
+                "Этот позывной звучит в ночи, \n" +
+                        "В случае опасности, иль нежности кричи"
+
+        ));
+        questionItems.add(new QuestionItem(
+                "уськ",
+                "Ушастый, пушистый, но вовсе не кроль, \n " +
+                        "Тебя очень любит это самый король."
+
+        ));
+        questionItems.add(new QuestionItem(
+                "кисякинг",
+                "C новым годом мышастя "
+        ));
+        return questionItems;
     }
 }
 
