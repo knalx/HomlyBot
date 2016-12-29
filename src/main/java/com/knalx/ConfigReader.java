@@ -18,6 +18,10 @@ public class ConfigReader {
             }
             return prop.getProperty(propName);
         }
+    }
 
+    public InputStream getCatPhotoStream() {
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("cats.png");
+        return inputStream;
     }
 }

@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.api.methods.send.SendAudio;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
+import org.telegram.telegrambots.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -33,7 +34,6 @@ public class HomelyBot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         try {
-            //super.sendAudio();
             String message = update.getMessage().getText().toLowerCase().replaceAll("[^а-яА-Яa-zA-Z]", "");
             SendMessage sm = new SendMessage();
             sm.setChatId(update.getMessage().getChatId().toString());
@@ -43,6 +43,17 @@ public class HomelyBot extends TelegramLongPollingBot {
             e.printStackTrace();
         }
         log.info(update.toString());
+    }
+
+    private void sendCatPhoto(Update update) {
+        SendPhoto sendPhoto = new SendPhoto();
+        sendPhoto.setChatId(update.getMessage().getChatId().toString());
+        sendPhoto.setNewPhoto("Kiss.png", configReader.getCatPhotoStream());
+        try {
+            this.sendPhoto(sendPhoto);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
     }
 
     private void sendCongratsSong(Update update) {
@@ -89,6 +100,9 @@ public class HomelyBot extends TelegramLongPollingBot {
         if (!questionItems.isEmpty() && questionItems.get(0).getQuest().equals(message)) {
             answ = questionItems.get(0).getAnswer();
             questionItems.remove(0);
+            if(questionItems.isEmpty()){
+                sendCatPhoto(update);
+            }
         }
         if (answ.isEmpty()) {
             ArrayList<String> list = new ArrayList<>();
@@ -145,7 +159,6 @@ public class HomelyBot extends TelegramLongPollingBot {
      * Уськ
      **/
 
-
     private LinkedList<QuestionItem> initQuestions() {
         LinkedList<QuestionItem> questionItems = new LinkedList<>();
 
@@ -162,13 +175,13 @@ public class HomelyBot extends TelegramLongPollingBot {
         ));
         questionItems.add(new QuestionItem(
                 "уськ",
-                "Ушастый, пушистый, но вовсе не кроль, \n " +
+                "Ушастый, пушистый, но вовсе не кроль, \n" +
                         "Тебя очень любит это самый король."
 
         ));
         questionItems.add(new QuestionItem(
                 "кисякинг",
-                "C новым годом мышастя "
+                "C новым годом!"
         ));
         return questionItems;
     }
