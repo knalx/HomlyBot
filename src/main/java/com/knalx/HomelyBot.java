@@ -3,6 +3,7 @@ package com.knalx;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.telegram.telegrambots.api.methods.ParseMode;
 import org.telegram.telegrambots.api.methods.send.SendAudio;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.methods.send.SendPhoto;
@@ -20,15 +21,13 @@ import java.util.Random;
  */
 public class HomelyBot extends TelegramLongPollingBot {
 
-    private LinkedList<QuestionItem> questionItems;
-
     Logger log = LoggerFactory.getLogger(this.getClass());
-
     ConfigReader configReader = new ConfigReader();
+    AnswerController answerController;
 
     public HomelyBot() {
         super();
-        questionItems = initQuestions();
+        answerController = new AnswerController();
     }
 
     @Override
@@ -38,22 +37,12 @@ public class HomelyBot extends TelegramLongPollingBot {
             SendMessage sm = new SendMessage();
             sm.setChatId(update.getMessage().getChatId().toString());
             sm.setText(getAnswer(message, update));
+            sm.setParseMode(ParseMode.MARKDOWN);
             this.sendMessage(sm);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
         log.info(update.toString());
-    }
-
-    private void sendCatPhoto(Update update) {
-        SendPhoto sendPhoto = new SendPhoto();
-        sendPhoto.setChatId(update.getMessage().getChatId().toString());
-        sendPhoto.setNewPhoto("Kiss.png", configReader.getCatPhotoStream());
-        try {
-            this.sendPhoto(sendPhoto);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
     }
 
     private void sendCongratsSong(Update update) {
@@ -78,47 +67,7 @@ public class HomelyBot extends TelegramLongPollingBot {
 
 
     private String getAnswer(String message, Update update) {
-        initQuestions();
-        String answ = "";
-        if (message.equals("лап")) {
-            sendCongratsSong(update);
-            answ = "Умничка! Ты все угадала!";
-        }
-        if (message.equals("гимн")) {
-            sendGimnSong(update);
-            answ = "Положил руку на сердце и встал.";
-        }
-
-        if (message.equals("атытожепума")) {
-            sendCongratsSong(update);
-            answ = "Да нет. У меня еще зубы молочные, и когти молочные, и мертвая мама...";
-        }
-        if (message.equals("ктолучшевсех")) {
-            sendCongratsSong(update);
-            answ = "Оля, лучше всех!";
-        }
-        if (!questionItems.isEmpty() && questionItems.get(0).getQuest().equals(message)) {
-            answ = questionItems.get(0).getAnswer();
-            questionItems.remove(0);
-            if(questionItems.isEmpty()){
-                sendCatPhoto(update);
-            }
-        }
-        if (answ.isEmpty()) {
-            ArrayList<String> list = new ArrayList<>();
-            list.add("Не понимаю о чем ты");
-            list.add("Эээ.... что?");
-            list.add("Ты о чем?");
-            list.add("Ничего не понял");
-            list.add("Ничего не понимаю");
-            list.add("Кто здесь?");
-            list.add("Ты мне?");
-
-            Random rand = new Random();
-            answ = list.get(rand.nextInt(list.size()));
-        }
-        return answ;
-
+       return answerController.getAnswer(message, update, this);
     }
 
     @Override
@@ -143,48 +92,6 @@ public class HomelyBot extends TelegramLongPollingBot {
         return token;
     }
 
-    /**
-     * Останки его нашли в янтаре,
-     * Не так уж и холоно ему в январе
-     * Пушизавр
-     * <p>
-     * <p>
-     * <p>
-     * Ушастый, пушистый, но он же не кроль,
-     * Тебя очень любит это самый король.
-     * Кисякинг
-     * <p>
-     * Этот позывной звучит в ночи,
-     * В случае опасности, иль нежности кричи
-     * Уськ
-     **/
-
-    private LinkedList<QuestionItem> initQuestions() {
-        LinkedList<QuestionItem> questionItems = new LinkedList<>();
-
-        questionItems.add(new QuestionItem(
-                "привет",
-                "Останки его нашли в янтаре \n" +
-                        "Не так уж и холоно ему в январе"
-        ));
-        questionItems.add(new QuestionItem(
-                "пушизавр",
-                "Этот позывной звучит в ночи, \n" +
-                        "В случае опасности, иль нежности кричи"
-
-        ));
-        questionItems.add(new QuestionItem(
-                "уськ",
-                "Ушастый, пушистый, но вовсе не кроль, \n" +
-                        "Тебя очень любит это самый король."
-
-        ));
-        questionItems.add(new QuestionItem(
-                "кисякинг",
-                "C новым годом!"
-        ));
-        return questionItems;
-    }
 }
 
 
